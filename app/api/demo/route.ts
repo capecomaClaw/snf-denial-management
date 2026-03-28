@@ -1,0 +1,130 @@
+/**
+ * GET /api/demo
+ * Returns 5 realistic SNF denial scenarios with full mock data.
+ * Each scenario has different root cause categories for demo diversity.
+ */
+
+import { NextResponse } from "next/server";
+import type { DenialRecord } from "@/lib/types";
+
+const DEMO_DENIALS: DenialRecord[] = [
+  {
+    id: "demo-001",
+    patientName: "Margaret H.",
+    claimNumber: "CLM-2024-087342",
+    payer: "Medicare Part A",
+    payerType: "Medicare",
+    serviceDate: "2024-10-01",
+    denialDate: "2024-11-15",
+    deniedAmount: 14800,
+    status: "New",
+    rawText: "CARC 50 — Non-covered service, not medically necessary. Patient admitted 10/01/2024 for skilled nursing. Claim denied: documentation does not support daily skilled care need.",
+    analysis: {
+      rootCause: "Medical necessity",
+      codes: [{ code: "50", type: "CARC", description: "These are non-covered services because this is not deemed a medical necessity by the payer.", category: "Medical necessity" }],
+      appealViability: "High",
+      appealReason: "Clinical documentation supports skilled care requirement; strong appeal candidate.",
+      requiredDocumentation: ["Physician orders", "Nursing assessment", "Therapy evaluations", "MDS assessment", "Progress notes (30 days)"],
+      deadlineDays: 120,
+      summary: "Medicare denied SNF claim citing lack of medical necessity. Patient presented with acute hip fracture requiring skilled PT/OT. Appeal with clinical documentation has high success rate.",
+    },
+    appealLetter: null,
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
+  {
+    id: "demo-002",
+    patientName: "Robert T.",
+    claimNumber: "CLM-2024-091205",
+    payer: "Blue Cross Blue Shield",
+    payerType: "Private",
+    serviceDate: "2024-10-15",
+    denialDate: "2024-11-20",
+    deniedAmount: 9200,
+    status: "In Appeal",
+    rawText: "CARC 252 — Attachment required. Prior authorization documentation not received. Claim pended then denied. Auth #PA-2024-55821 not on file.",
+    analysis: {
+      rootCause: "Prior auth required",
+      codes: [{ code: "252", type: "CARC", description: "An attachment/other document is required to adjudicate this claim/service.", category: "Missing documentation" }, { code: "197", type: "CARC", description: "Precertification/authorization/notification absent.", category: "Prior auth required" }],
+      appealViability: "High",
+      appealReason: "Authorization was obtained; documentation can be resubmitted.",
+      requiredDocumentation: ["Prior authorization confirmation letter", "Auth number PA-2024-55821", "Clinical notes supporting admission"],
+      deadlineDays: 180,
+      summary: "BCBS denied claim citing missing prior auth. Authorization was obtained but not linked to claim on submission. Resubmit with auth documentation.",
+    },
+    appealLetter: null,
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+  },
+  {
+    id: "demo-003",
+    patientName: "Dorothy M.",
+    claimNumber: "CLM-2024-094781",
+    payer: "FL Medicaid",
+    payerType: "Medicaid",
+    serviceDate: "2024-09-10",
+    denialDate: "2024-11-18",
+    deniedAmount: 5400,
+    status: "New",
+    rawText: "CARC 4 — Service not covered under this benefit category. CPT billed: 99304. ICD-10: M79.3. Code mismatch — procedure code inconsistent with diagnosis.",
+    analysis: {
+      rootCause: "Coding error",
+      codes: [{ code: "4", type: "CARC", description: "The service/equipment/drug is not covered under this benefit category.", category: "Coding error" }],
+      appealViability: "Medium",
+      appealReason: "Coding correction needed; resubmission with corrected codes likely to resolve.",
+      requiredDocumentation: ["Corrected CMS-1450 (UB-04)", "Medical record supporting diagnosis", "Coder attestation"],
+      deadlineDays: 90,
+      summary: "FL Medicaid denied due to ICD-10/CPT mismatch. Coding review revealed procedure code should be 99307. Corrected resubmission recommended.",
+    },
+    appealLetter: null,
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+  },
+  {
+    id: "demo-004",
+    patientName: "James W.",
+    claimNumber: "CLM-2024-098233",
+    payer: "Medicare Part A",
+    payerType: "Medicare",
+    serviceDate: "2024-08-01",
+    denialDate: "2024-11-10",
+    deniedAmount: 22100,
+    status: "Lost",
+    rawText: "CARC 29 — Time limit for filing has expired. Claim received 11/01/2024 for DOS 08/01/2024. Medicare 12-month timely filing limit exceeded.",
+    analysis: {
+      rootCause: "Timely filing",
+      codes: [{ code: "29", type: "CARC", description: "The time limit for filing has expired.", category: "Timely filing" }],
+      appealViability: "Low",
+      appealReason: "Timely filing limits are rarely waived without documented extraordinary circumstances.",
+      requiredDocumentation: ["Original submission proof", "Clearinghouse rejection logs", "Documentation of extraordinary circumstances"],
+      deadlineDays: 120,
+      summary: "Medicare denied claim for DOS 08/01 received on 11/01 — 3 months within the limit but records show original submission failed in clearinghouse. Low appeal viability.",
+    },
+    appealLetter: null,
+    createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+  },
+  {
+    id: "demo-005",
+    patientName: "Helen R.",
+    claimNumber: "CLM-2024-101567",
+    payer: "Aetna",
+    payerType: "Private",
+    serviceDate: "2024-11-01",
+    denialDate: "2024-11-25",
+    deniedAmount: 7650,
+    status: "New",
+    rawText: "CARC 22 — COB: This care may be covered by another payer. Patient has Medicare as primary. Aetna requests Medicare EOB before processing as secondary.",
+    analysis: {
+      rootCause: "Coordination of benefits",
+      codes: [{ code: "22", type: "CARC", description: "This care may be covered by another payer per coordination of benefits.", category: "Coordination of benefits" }],
+      appealViability: "High",
+      appealReason: "COB denials are routinely resolved by submitting primary payer EOB.",
+      requiredDocumentation: ["Medicare EOB (primary payer)", "Aetna secondary claim form", "Coordination of benefits form"],
+      deadlineDays: 180,
+      summary: "Aetna denied as secondary payer pending Medicare EOB. Patient is Medicare primary / Aetna secondary. Submit Medicare determination to Aetna to resolve.",
+    },
+    appealLetter: null,
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+];
+
+export async function GET() {
+  return NextResponse.json({ denials: DEMO_DENIALS });
+}
